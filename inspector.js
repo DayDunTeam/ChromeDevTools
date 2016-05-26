@@ -1,8 +1,27 @@
 var XMLSerialize = new XMLSerializer();
+var DOMParse = new DOMParser();
+
+var tab;
+var source;
+
+window.onerror = function(message, source, line) {
+    alert("Error: " + message + "\nLine: " + line + "\nSource: " + source);
+};
+
+chrome.runtime.onMessage = function(request, sender) {
+    /*if (rquiest.action == "tabId") {
+        tab = request.source;
+    }*/
+    if (request.action == "documentSource") {
+        tab = sender.tab.id;
+        source = DOMParse.parseFromString(request.html, "text/xml");
+        printPageElements();
+    }
+};
 
 function printElement(element, inElement) {
     var elementElement = document.createElement("li");
-    var elementSpan = document.createElement("span");
+    var elementTag = document.createElement("span");
     elementTag.className = "html-tag";
     elementTag.innerHTML = "&td;";
     var elementName = document.createElement("span");
@@ -24,11 +43,14 @@ function printElement(element, inElement) {
         attribute.innerHTML += "\"";
     }
     elementTag.innerHTML += "&gt;";
-    doctype.appendChild(doctypeSpan);
-    var doctypeChildren = document.createElement("ol");
-    doctypeChildren.className = "children";
-    document.getElementById("elements-list").appendChild(doctype);
-    document.getElementById("elements-list").appendChild(doctypeChildren);
+    elementElement.appendChild(elementTag);
+    var elementChildren = document.createElement("ol");
+    elementChildren.className = "children";
+    for (i=0; i<element.children.length; i++) {
+        printElement(element.children[i], elementChildren);
+    }
+    inElement.appendChild(elementElement);
+    inElement.appendChild(elementChildren);
 }
 
 function printPageElements() {
@@ -36,11 +58,17 @@ function printPageElements() {
     var doctype = document.createElement("li");
     var doctypeSpan = document.createElement("span");
     doctypeSpan.className = "html-doctype";
-    doctypeSpan.innerHTML = XMLSerialize.serializeToString(document.doctype);
+    doctypeSpan.innerHTML = XMLSerialize.serializeToString(source.doctype);
     doctype.appendChild(doctypeSpan);
     var doctypeChildren = document.createElement("ol");
     doctypeChildren.className = "children";
     document.getElementById("elements-list").appendChild(doctype);
     document.getElementById("elements-list").appendChild(doctypeChildren);
-    printElement(document.documentElement, document.getElementById("elements-list"));
+    printElement(source.documentElement, document.getElementById("elements-list"));
+}
+
+function requestDocument() {
+    if (tab) {
+        chrome.tabs.sendMessage(tab, {action: "documentRequest"});
+    }
 }

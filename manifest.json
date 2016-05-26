@@ -9,7 +9,8 @@
     "offline_enabled": true,
     "permissions": [
         "contextMenus",
-        "tabs"
+        "tabs",
+        "*://*/"
     ],
     "icons": {
         "16": "images/icon_16.png",
