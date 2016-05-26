@@ -1,7 +1,9 @@
+<!DOCTYPE html>
 <html>
     <head>
         <meta charset="UTF-8">
         <title>Inspector+</title>
+        <link href="inspector.css" rel="stylesheet" type="text/css">
         <script src="inspector.js"></script>
     </head>
     <body>
@@ -12,7 +14,24 @@
             <div id="content">
                 <div id="elements">
                     <div id="elements-view">
-                        
+                        <ol id="elements-list">
+                            <li>
+                                <span class="html-doctype">&lt;!DOCTYPE html&gt;</span>
+                            </li>
+                            <ol class="children"></ol>
+                            <li class="parent expanded">
+                                <span class="html-tag">&lt;<span class="html-tag-name">html</span>&gt;</span>
+                            </li>
+                            <ol class="children expanded">
+                                <li class="parent expanded">
+                                    <span class="html-tag">&lt;<span class="html-tag-name">head</span> <span class="html-attribute"><span class="html-attribute-name">id</span>="<span class="html-attribute-value">test-id</span>"</span>&gt;</span>
+                                </li>
+                                <ol class="children"></ol>
+                                <li>
+                                    <span class="html-tag html-close">&lt;<span class="html-close-tag-name">/html</span>&gt;</span>
+                                </li>
+                            </ol>
+                        </ol>
                     </div>
                     <div id="style-view">
                         
