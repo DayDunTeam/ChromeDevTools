@@ -1,0 +1,2278 @@
+<html>
+
+<head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8">
+    <meta http-equiv="Content-Security-Policy" content="object-src 'none'; script-src 'self' 'unsafe-eval' https://chrome-devtools-frontend.appspot.com">
+    <script type="text/javascript" src="inspector.js"></script>
+</head>
+
+<body class="undocked platform-windows inactive" id="-blink-dev-tools">
+
+    <style type="text/css">
+        /*
+ * Copyright (C) 2006, 2007, 2008 Apple Inc.  All rights reserved.
+ * Copyright (C) 2009 Anthony Ricaud <rik@webkit.org>
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ *
+ * 1.  Redistributions of source code must retain the above copyright
+ *     notice, this list of conditions and the following disclaimer.
+ * 2.  Redistributions in binary form must reproduce the above copyright
+ *     notice, this list of conditions and the following disclaimer in the
+ *     documentation and/or other materials provided with the distribution.
+ * 3.  Neither the name of Apple Computer, Inc. ("Apple") nor the names of
+ *     its contributors may be used to endorse or promote products derived
+ *     from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY APPLE AND ITS CONTRIBUTORS "AS IS" AND ANY
+ * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL APPLE OR ITS CONTRIBUTORS BE LIABLE FOR ANY
+ * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+        
+        html {
+            height: 100%;
+            overflow: hidden;
+        }
+        
+        body {
+            height: 100%;
+            width: 100%;
+            position: relative;
+            overflow: hidden;
+            margin: 0;
+            cursor: default;
+            font-family: '.SFNSDisplay-Regular', 'Helvetica Neue', 'Lucida Grande', sans-serif;
+            font-size: 12px;
+            tab-size: 4;
+            -webkit-user-select: none;
+            color: #222;
+        }
+        
+        .platform-linux {
+            color: rgb(48, 57, 66);
+            font-family: Ubuntu, Arial, sans-serif;
+        }
+        
+        .platform-mac {
+            color: rgb(48, 57, 66);
+            font-family: '.SFNSDisplay-Regular', 'Helvetica Neue', 'Lucida Grande', sans-serif;
+        }
+        
+        .platform-windows {
+            font-family: 'Segoe UI', Tahoma, sans-serif;
+        }
+        
+        label:hover input {
+            box-shadow: 0 0 3px highlight;
+        }
+        
+        fieldset[disabled] label:hover input {
+            box-shadow: none;
+        }
+        
+        .object-popover-container {
+            display: inline-block;
+        }
+        
+        .inspected-page-placeholder {
+            background-color: white;
+        }
+        
+        .toolbar-background {
+            padding-left: 1px;
+            border-bottom: 1px solid rgb(64%, 64%, 64%);
+            background-origin: padding-box;
+            background-clip: padding-box;
+        }
+        
+        .bubble-repeat-count {
+            display: inline-block;
+            height: 14px;
+            background-color: rgb(128, 151, 189);
+            vertical-align: middle;
+            white-space: nowrap;
+            padding: 1px 4px;
+            text-align: left;
+            font-size: 11px;
+            line-height: normal;
+            font-weight: bold;
+            text-shadow: none;
+            color: white;
+            margin-top: -1px;
+            border-radius: 7px;
+        }
+        
+        .error-message {
+            color: red;
+        }
+        
+        .-theme-with-dark-background .error-message {
+            color: hsl(0, 100%, 65%);
+        }
+        
+        .panel {
+            display: flex;
+            overflow: hidden;
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 0;
+        }
+        
+        iframe.extension {
+            flex: auto;
+            width: 100%;
+            height: 100%;
+        }
+        
+        iframe.panel.extension {
+            display: block;
+            height: 100%;
+        }
+        
+        .outline-disclosure {
+            padding: 0 0 0 4px;
+            margin: 0;
+        }
+        
+        .outline-disclosure li {
+            position: relative;
+        }
+        
+        .outline-disclosure li.hovered:not(.selected) .selection {
+            display: block;
+            left: 3px;
+            right: 3px;
+            background-color: rgba(56, 121, 217, 0.1);
+            border-radius: 5px;
+        }
+        
+        .outline-disclosure li .selection {
+            display: none;
+            z-index: -1;
+            margin-left: -10000px;
+        }
+        
+        .outline-disclosure li.selected .selection {
+            display: block;
+            background-color: #dadada;
+        }
+        
+        .outline-disclosure li.in-clipboard .highlight {
+            outline: 1px dotted darkgrey;
+        }
+        
+        .outline-disclosure li.elements-drag-over .selection {
+            display: block;
+            margin-top: -2px;
+            border-top: 2px solid rgb(56, 121, 217);
+        }
+        
+        ol.outline-disclosure:focus li.selected .selection {
+            background-color: rgb(56, 121, 217);
+        }
+        
+        ol.outline-disclosure:focus li.parent.selected::before {
+            background-color: white;
+        }
+        
+        ol.outline-disclosure,
+        .outline-disclosure ol {
+            list-style-type: none;
+        }
+        
+        .outline-disclosure-no-padding {
+            padding: 0;
+        }
+        
+        .outline-disclosure ol {
+            padding-left: 12px;
+        }
+        
+        .outline-disclosure li {
+            margin-top: 1px;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        
+        ol.outline-disclosure:focus li.selected {
+            color: white;
+        }
+        
+        ol.outline-disclosure:focus li.selected * {
+            color: inherit;
+        }
+        
+        .outline-disclosure li::before {
+            -webkit-user-select: none;
+            -webkit-mask-image: url(Images/toolbarButtonGlyphs.png);
+            -webkit-mask-size: 352px 168px;
+            content: "aa";
+            color: transparent;
+            text-shadow: none;
+            margin-right: -2px;
+        }
+        
+        .outline-disclosure li:not(.parent)::before {
+            background-color: transparent;
+        }
+        
+        @media (-webkit-min-device-pixel-ratio: 1.5) {
+            .outline-disclosure li::before {
+                -webkit-mask-image: url(Images/toolbarButtonGlyphs_2x.png);
+            }
+        }
+        /* media */
+        
+        .outline-disclosure li::before {
+            -webkit-mask-position: -4px -96px;
+            background-color: rgb(110, 110, 110);
+        }
+        
+        .outline-disclosure li.parent.expanded::before {
+            -webkit-mask-position: -20px -96px;
+        }
+        
+        .outline-disclosure ol.children {
+            display: none;
+        }
+        
+        .outline-disclosure ol.children.expanded {
+            display: block;
+        }
+        
+        .properties-accessor-property-name {
+            font-style: italic;
+        }
+        
+        .child-editing {
+            color: #222 !important;
+            text-decoration: none !important;
+            overflow: visible !important;
+        }
+        
+        .sidebar {
+            overflow-x: hidden;
+            background-color: #f3f3f3;
+        }
+        
+        .pane-title-button {
+            color: rgb(6, 6, 6);
+            background-color: transparent;
+            border: 1px solid rgb(165, 165, 165);
+            background-color: #eee;
+            background-image: linear-gradient(to bottom, rgb(252, 252, 252), rgb(223, 223, 223));
+            border-radius: 12px;
+            -webkit-appearance: none;
+        }
+        
+        .pane-title-button:active {
+            background-color: rgb(215, 215, 215);
+            background-image: linear-gradient(to bottom, rgb(194, 194, 194), rgb(239, 239, 239));
+        }
+        
+        .sidebar-tree,
+        .sidebar-tree .children {
+            position: relative;
+            padding: 0;
+            margin: 0;
+            list-style: none;
+        }
+        
+        .sidebar-tree-section {
+            position: relative;
+            height: 18px;
+            padding: 1px 10px 6px 10px;
+            white-space: nowrap;
+            margin-top: 1px;
+            color: rgb(92, 110, 129);
+            text-shadow: rgba(255, 255, 255, 0.75) 0 1px 0;
+        }
+        
+        .sidebar-tree-item {
+            position: relative;
+            height: 36px;
+            padding: 0 5px 0 5px;
+            white-space: nowrap;
+            overflow-x: hidden;
+            overflow-y: hidden;
+            margin-top: 1px;
+            line-height: 34px;
+            border-top: 1px solid transparent;
+        }
+        
+        .sidebar-tree .children {
+            display: none;
+        }
+        
+        .sidebar-tree .children.expanded {
+            display: block;
+        }
+        
+        .sidebar-tree-section + .children > .sidebar-tree-item {
+            padding-left: 10px !important;
+        }
+        
+        .sidebar-tree-section + .children.small > .sidebar-tree-item {
+            padding-left: 17px !important;
+        }
+        
+        .sidebar-tree > .children > .sidebar-tree-item {
+            padding-left: 37px;
+        }
+        
+        .sidebar-tree > .children > .children > .sidebar-tree-item {
+            padding-left: 37px;
+        }
+        
+        .sidebar-tree.some-expandable > .sidebar-tree-item:not(.parent) .icon {
+            margin-left: 16px;
+        }
+        
+        .sidebar-tree-item .disclosure-button {
+            float: left;
+            width: 10px;
+            height: 10px;
+            border: 0;
+            -webkit-mask-image: url(Images/toolbarButtonGlyphs.png);
+            -webkit-mask-size: 352px 168px;
+            -webkit-appearance: none;
+            background-color: rgba(0, 0, 0, 0.75);
+            position: relative;
+            top: 10px;
+        }
+        
+        @media (-webkit-min-device-pixel-ratio: 1.5) {
+            .sidebar-tree-item .disclosure-button {
+                -webkit-mask-image: url(Images/toolbarButtonGlyphs_2x.png);
+            }
+        }
+        /* media */
+        
+        .sidebar-tree-item .disclosure-button {
+            -webkit-mask-position: -4px -96px;
+        }
+        
+        .sidebar-tree-item.selected .disclosure-button {
+            background-color: white;
+            -webkit-mask-position: -4px -96px;
+        }
+        
+        .sidebar-tree-item.expanded .disclosure-button {
+            -webkit-mask-position: -20px -96px;
+        }
+        
+        .sidebar-tree-item.selected.expanded .disclosure-button {
+            background-color: white;
+            -webkit-mask-position: -20px -96px;
+        }
+        
+        .sidebar-tree-item .icon {
+            float: left;
+            width: 32px;
+            height: 32px;
+            margin-top: 1px;
+            margin-right: 3px;
+        }
+        
+        .sidebar-tree-item.wait .icon {
+            content: none;
+        }
+        
+        .spinner-icon::before,
+        .sidebar-tree-item.wait .icon::before {
+            display: block;
+            width: 24px;
+            height: 24px;
+            margin: 4px;
+            border: 3px solid grey;
+            border-radius: 12px;
+            clip: rect(0, 15px, 15px, 0);
+            content: "";
+            position: absolute;
+            -webkit-animation: spinner-animation 1s linear infinite;
+            box-sizing: border-box;
+        }
+        
+        .spinner-icon.small::before,
+        .sidebar-tree-item.wait.small .icon::before {
+            width: 14px;
+            height: 14px;
+            margin: 1px;
+            clip: rect(0, 9px, 9px, 0);
+            border-width: 2px;
+        }
+        
+        .sidebar-tree-item.wait.selected .icon::before {
+            border-color: white;
+        }
+        
+        @-webkit-keyframes spinner-animation {
+            from {
+                transform: rotate(0);
+            }
+            to {
+                transform: rotate(360deg);
+            }
+        }
+        
+        li .status {
+            float: right;
+            height: 16px;
+            margin-top: 9px;
+            margin-left: 4px;
+            line-height: 1em;
+        }
+        
+        li .status:empty {
+            display: none;
+        }
+        
+        li .status .bubble-repeat-count:empty {
+            display: none;
+        }
+        
+        li.selected .status .bubble-repeat-count {
+            background-color: white !important;
+            color: rgb(132, 154, 190) !important;
+        }
+        
+        :focus li.selected .status .bubble-repeat-count {
+            color: rgb(36, 98, 172) !important;
+        }
+        
+        body.inactive li.selected .status .bubble-repeat-count {
+            color: rgb(159, 159, 159) !important;
+        }
+        
+        .sidebar-tree.small .sidebar-tree-item,
+        .sidebar-tree .children.small .sidebar-tree-item,
+        .sidebar-tree-item.small {
+            height: 20px;
+        }
+        
+        .sidebar-tree.small .sidebar-tree-item .icon,
+        .sidebar-tree .children.small .sidebar-tree-item .icon,
+        .sidebar-tree-item.small .icon {
+            width: 16px;
+            height: 16px;
+        }
+        
+        .sidebar-tree.small .sidebar-tree-item .status,
+        .sidebar-tree .children.small .sidebar-tree-item .status,
+        .sidebar-tree-item.small .status {
+            margin-top: 1px;
+        }
+        
+        .sidebar-tree-item.selected,
+        .-theme-selection-color {
+            color: white;
+            background-origin: padding-box;
+            background-clip: padding-box;
+            background-color: rgb(56, 121, 217);
+        }
+        
+        :focus .sidebar-tree-item.selected {
+            background-color: rgb(56, 121, 217);
+        }
+        
+        body.inactive .sidebar-tree-item.selected {
+            background-color: rgb(180, 180, 180);
+        }
+        
+        .sidebar-tree-item .titles {
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            top: 5px;
+            line-height: 12px;
+            padding-bottom: 1px;
+            text-overflow: ellipsis;
+            overflow: hidden;
+            white-space: nowrap;
+        }
+        
+        .titles > .title-container {
+            display: flex;
+        }
+        
+        .sidebar-tree-item .titles.no-subtitle {
+            top: 10px;
+        }
+        
+        .sidebar-tree.small .sidebar-tree-item .titles,
+        .sidebar-tree .children.small .sidebar-tree-item .titles,
+        .sidebar-tree-item.small .titles {
+            top: 2px;
+            line-height: normal;
+        }
+        
+        .sidebar-tree:not(.small) .sidebar-tree-item:not(.small) .title::after,
+        .sidebar-tree .children:not(.small) .sidebar-tree-item .title::after {
+            content: "\A";
+            white-space: pre;
+        }
+        
+        .sidebar-tree-item .subtitle {
+            font-size: 80%;
+        }
+        
+        .sidebar-tree.small .sidebar-tree-item .subtitle,
+        .sidebar-tree .children.small .sidebar-tree-item .subtitle,
+        .sidebar-tree-item.small .subtitle {
+            display: none;
+        }
+        
+        .sidebar-tree-item.selected .subtitle {
+            color: white;
+        }
+        
+        .bubble-repeat-count.debug,
+        .console-debug-level .bubble-repeat-count {
+            background-color: rgb(0, 0, 255) !important;
+        }
+        
+        .bubble-repeat-count.warning,
+        .console-warning-level .bubble-repeat-count {
+            background-color: rgb(232, 164, 0) !important;
+        }
+        
+        .bubble-repeat-count.error,
+        .console-error-level .bubble-repeat-count {
+            background-color: rgb(216, 35, 35) !important;
+        }
+        
+        .soft-context-menu-glass-pane {
+            z-index: 20000;
+        }
+        
+        .root-view {
+            background-color: white;
+            overflow: hidden;
+            position: absolute !important;
+            left: 0;
+            top: 0;
+            right: 0;
+            bottom: 0;
+        }
+        
+        .drawer-toolbar {
+            margin-right: -6px;
+        }
+        /*# sourceURL=ui/inspectorStyle.css */
+    </style>
+    <style type="text/css">
+        .popover-container {
+            pointer-events: none;
+            overflow: hidden;
+        }
+        
+        .popover {
+            position: absolute;
+            z-index: 600;
+            pointer-events: none;
+            display: flex;
+            background-color: white;
+            box-shadow: 0 6px 10px 0 rgba(0, 0, 0, 0.3), 0 2px 2px 0 rgba(0, 0, 0, 0.2), 0 1px 4px 0 rgba(0, 0, 0, 0.37);
+            border-radius: 2px;
+        }
+        
+        .popover .content {
+            pointer-events: auto;
+            overflow: auto;
+            -webkit-user-select: text;
+            line-height: 11px;
+            flex: auto;
+            margin: 6px;
+        }
+        
+        .popover .content.no-margin {
+            margin: 0;
+            overflow: hidden;
+        }
+        
+        .popover .arrow {
+            position: absolute;
+            background-image: url(Images/popoverArrows.png);
+            width: 19px;
+            height: 19px;
+            margin-top: -19px;
+            top: 0;
+            left: 0;
+        }
+        
+        .-theme-with-dark-background .popover .arrow {
+            -webkit-filter: invert(80%);
+        }
+        
+        .popover.top-left-arrow .arrow {
+            /* The default is top-left, no styles needed. */
+        }
+        
+        .popover.top-right-arrow .arrow {
+            right: 19px;
+            left: auto;
+        }
+        
+        .popover.bottom-left-arrow .arrow {
+            top: auto;
+            bottom: 0;
+            margin-top: 0;
+            margin-bottom: -19px;
+            background-position: 0 -19px;
+        }
+        
+        .popover.bottom-right-arrow .arrow {
+            right: 15px;
+            left: auto;
+            top: auto;
+            bottom: 0;
+            margin-top: 0;
+            margin-bottom: -19px;
+            background-position: 0 -19px;
+        }
+        
+        .source-frame-popover-title {
+            text-overflow: ellipsis;
+            overflow: hidden;
+            white-space: nowrap;
+            font-weight: bold;
+            padding-left: 18px;
+        }
+        
+        .source-frame-popover-tree {
+            border-top: 1px solid rgb(184, 184, 184);
+            overflow: auto;
+            position: absolute;
+            top: 21px;
+            bottom: 5px;
+            left: 5px;
+            right: 5px;
+            margin-top: 1px;
+        }
+        /*# sourceURL=ui/popover.css */
+    </style>
+    <style type="text/css">
+        /*
+ * Copyright (C) 2006, 2007, 2008 Apple Inc.  All rights reserved.
+ * Copyright (C) 2009 Anthony Ricaud <rik@webkit.org>
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ *
+ * 1.  Redistributions of source code must retain the above copyright
+ *     notice, this list of conditions and the following disclaimer.
+ * 2.  Redistributions in binary form must reproduce the above copyright
+ *     notice, this list of conditions and the following disclaimer in the
+ *     documentation and/or other materials provided with the distribution.
+ * 3.  Neither the name of Apple Computer, Inc. ("Apple") nor the names of
+ *     its contributors may be used to endorse or promote products derived
+ *     from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY APPLE AND ITS CONTRIBUTORS "AS IS" AND ANY
+ * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL APPLE OR ITS CONTRIBUTORS BE LIABLE FOR ANY
+ * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+        
+        .sidebar-pane {
+            position: relative;
+            flex-direction: column;
+            display: flex;
+            flex: none;
+        }
+        
+        .sidebar-pane-hidden {
+            display: none;
+        }
+        
+        .sidebar-pane .info {
+            text-align: center;
+            font-style: italic;
+            padding: 6px;
+            color: #888;
+        }
+        
+        .sidebar-pane .section .properties-tree {
+            padding-left: 16px;
+        }
+        
+        .sidebar-tabbed-pane .tabbed-pane-header {
+            border-bottom: 1px solid rgb(202, 202, 202);
+            background-color: #eee;
+        }
+        
+        .sidebar-pane-title {
+            display: flex;
+            align-items: center;
+            background-color: #eee;
+            height: 20px;
+            padding: 0 5px;
+            border-top: 1px solid #dadada;
+            white-space: nowrap;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .sidebar-pane-title.expanded,
+        .sidebar-pane-title:last-child {
+            border-bottom: 1px solid #ddd;
+        }
+        
+        .sidebar-pane-title::before {
+            -webkit-mask-image: url(Images/toolbarButtonGlyphs.png);
+            -webkit-mask-size: 352px 168px;
+            background-color: #888;
+            float: left;
+            width: 11px;
+            height: 11px;
+            margin-right: 2px;
+            content: "a";
+            color: transparent;
+        }
+        
+        @media (-webkit-min-device-pixel-ratio: 1.5) {
+            .sidebar-pane-title::before {
+                -webkit-mask-image: url(Images/toolbarButtonGlyphs_2x.png);
+            }
+        }
+        /* media */
+        
+        .sidebar-pane-title::before {
+            -webkit-mask-position: -4px -96px;
+        }
+        
+        .sidebar-pane-title.expanded::before {
+            -webkit-mask-position: -20px -96px;
+        }
+        
+        .sidebar-pane > .toolbar {
+            border-bottom: 1px solid #eee;
+        }
+        
+        .sidebar-pane > .toolbar > * {
+            pointer-events: auto;
+        }
+        
+        .sidebar-pane-title > .toolbar {
+            position: absolute;
+            right: 0;
+            top: -3px;
+        }
+        
+        .section > .header input[type=checkbox] {
+            height: 1em;
+            width: 1em;
+            margin-left: 0;
+            margin-top: 0;
+            margin-bottom: 0.25em;
+            vertical-align: bottom;
+        }
+        
+        .hidden-callframes-message {
+            text-align: center;
+            font-style: italic;
+            padding: 4px;
+            color: #888;
+            background-color: #FFFFC2;
+        }
+        /*# sourceURL=ui/sidebarPane.css */
+    </style>
+    <style type="text/css">
+        /*
+ * Copyright 2015 The Chromium Authors. All rights reserved.
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+        
+        * {
+            /* This is required for correct sizing of flex items because we rely
+     * on an old version of the flexbox spec.
+     * Longer-term we should remove this, see crbug.com/473625 */
+            min-width: 0;
+            min-height: 0;
+        }
+        
+        :host-context(.platform-mac) .monospace,
+        :host-context(.platform-mac) .source-code,
+        .platform-mac .monospace,
+        .platform-mac .source-code {
+            font-size: 11px !important;
+            font-family: Menlo, monospace;
+        }
+        
+        :host-context(.platform-windows) .monospace,
+        :host-context(.platform-windows) .source-code,
+        .platform-windows .monospace,
+        .platform-windows .source-code {
+            font-size: 12px !important;
+            font-family: Consolas, Lucida Console, monospace;
+        }
+        
+        :host-context(.platform-linux) .monospace,
+        :host-context(.platform-linux) .source-code,
+        .platform-linux .monospace,
+        .platform-linux .source-code {
+            font-size: 11px !important;
+            font-family: dejavu sans mono, monospace;
+        }
+        
+        .source-code {
+            font-family: monospace;
+            font-size: 11px !important;
+            white-space: pre-wrap;
+        }
+        
+        * {
+            box-sizing: border-box;
+        }
+        
+        :focus {
+            outline: none;
+        }
+        
+        img {
+            -webkit-user-drag: none;
+        }
+        
+        iframe,
+        a img {
+            border: none;
+        }
+        
+        .fill {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+        }
+        
+        iframe.fill {
+            width: 100%;
+            height: 100%;
+        }
+        
+        .widget {
+            position: relative;
+            flex: auto;
+        }
+        
+        .hbox {
+            display: flex;
+            flex-direction: row !important;
+            position: relative;
+        }
+        
+        .vbox {
+            display: flex;
+            flex-direction: column !important;
+            position: relative;
+        }
+        
+        .flex-auto {
+            flex: auto;
+        }
+        
+        .flex-auto-important {
+            flex: auto !important;
+        }
+        
+        .flex-none {
+            flex: none;
+        }
+        
+        .flex-centered {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        iframe.widget {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            left: 0;
+            right: 0;
+            top: 0;
+            bottom: 0;
+        }
+        
+        .hidden {
+            display: none !important;
+        }
+        
+        .monospace {
+            font-size: 10px !important;
+            font-family: monospace;
+        }
+        
+        .highlighted-search-result {
+            border-radius: 1px;
+            padding: 1px;
+            margin: -1px;
+            background-color: rgba(255, 255, 0, 0.8);
+        }
+        
+        .-theme-with-dark-background .highlighted-search-result,
+        :host-context(.-theme-with-dark-background) .highlighted-search-result {
+            background-color: hsl(133, 100%, 30%);
+            color: #333;
+        }
+        
+        .link {
+            cursor: pointer;
+            text-decoration: underline;
+            color: rgb(17, 85, 204);
+        }
+        
+        button,
+        input,
+        select {
+            font-family: inherit;
+            font-size: inherit;
+            color: inherit;
+        }
+        
+        input {
+            background-color: white;
+        }
+        
+        :host-context(.-theme-with-dark-background) input[type="checkbox"] {
+            -webkit-filter: invert(80%);
+        }
+        
+        input[type="search"]:focus,
+        input[type="text"]:focus {
+            outline: auto 5px -webkit-focus-ring-color;
+        }
+        
+        .highlighted-search-result.current-search-result {
+            border-radius: 1px;
+            padding: 1px;
+            margin: -1px;
+            background-color: rgba(255, 127, 0, 0.8);
+        }
+        
+        .dimmed {
+            opacity: 0.6;
+        }
+        
+        .editing {
+            -webkit-user-select: text;
+            box-shadow: rgba(0, 0, 0, .5) 3px 3px 4px;
+            outline: 1px solid rgb(66%, 66%, 66%) !important;
+            background-color: white;
+            -webkit-user-modify: read-write-plaintext-only;
+            text-overflow: clip !important;
+            padding-left: 2px;
+            margin-left: -2px;
+            padding-right: 2px;
+            margin-right: -2px;
+            margin-bottom: -1px;
+            padding-bottom: 1px;
+            opacity: 1.0 !important;
+        }
+        
+        .editing,
+        .editing * {
+            color: #222 !important;
+            text-decoration: none !important;
+        }
+        
+        .error-input {
+            outline: auto 2px red !important;
+        }
+        
+        .chrome-select {
+            -webkit-appearance: none;
+            -webkit-user-select: none;
+            border: 1px solid rgb(160, 160, 160);
+            border-radius: 2px;
+            box-shadow: 0 1px 0 rgba(0, 0, 0, 0.08), inset 0 1px 2px rgba(255, 255, 255, 0.75);
+            color: #444;
+            font: inherit;
+            margin: 0 1px 0 0;
+            outline: none;
+            text-shadow: 0 1px 0 rgb(240, 240, 240);
+            padding-right: 20px;
+            padding-left: 6px;
+            background-image: -webkit-image-set(url(Images/chromeSelect.png) 1x, url(Images/chromeSelect_2x.png) 2x), linear-gradient(#ededed, #ededed 38%, #dedede);
+            background-position: right center;
+            background-repeat: no-repeat;
+            min-height: 24px;
+        }
+        
+        .chrome-select:enabled:hover {
+            background-image: -webkit-image-set(url(Images/chromeSelect.png) 1x, url(Images/chromeSelect_2x.png) 2x), linear-gradient(#f0f0f0, #f0f0f0 38%, #e0e0e0);
+            border-color: rgba(0, 0, 0, 0.3);
+            box-shadow: 0 1px 0 rgba(0, 0, 0, 0.12), inset 0 1px 2px rgba(255, 255, 255, 0.95);
+            color: black;
+        }
+        
+        .chrome-select:enabled:active {
+            background-image: -webkit-image-set(url(Images/chromeSelect.png) 1x, url(Images/chromeSelect_2x.png) 2x), linear-gradient(#e7e7e7, #e7e7e7 38%, #d7d7d7);
+            box-shadow: none;
+            text-shadow: none;
+        }
+        
+        .chrome-select:enabled:focus {
+            /* OVERRIDE */
+            -webkit-transition: border-color 200ms;
+            /* We use border color because it follows the border radius (unlike outline).
+     * This is particularly noticeable on mac. */
+            border-color: rgb(77, 144, 254);
+            outline: none;
+        }
+        
+        body.inactive select.chrome-select,
+        .chrome-select:disabled {
+            background-image: -webkit-image-set(url(Images/chromeDisabledSelect.png) 1x, url(Images/chromeDisabledSelect_2x.png) 2x), linear-gradient(#f1f1f1, #f1f1f1 38%, #e6e6e6);
+            border-color: rgba(80, 80, 80, 0.2);
+            box-shadow: 0 1px 0 rgba(80, 80, 80, 0.08), inset 0 1px 2px rgba(255, 255, 255, 0.75);
+            color: #aaa;
+        }
+        
+        :not(.platform-mac).-theme-with-dark-background::-webkit-scrollbar,
+        :host-context(:not(.platform-mac).-theme-with-dark-background)::-webkit-scrollbar {
+            width: 14px;
+        }
+        
+        :not(.platform-mac).-theme-with-dark-background::-webkit-scrollbar-track,
+        :host-context(:not(.platform-mac).-theme-with-dark-background)::-webkit-scrollbar-track {
+            -webkit-box-shadow: inset 0 0 1px rgba(255, 255, 255, 0.3);
+        }
+        
+        :not(.platform-mac).-theme-with-dark-background::-webkit-scrollbar-thumb,
+        :host-context(:not(.platform-mac).-theme-with-dark-background) .-theme-with-dark-background::-webkit-scrollbar-thumb {
+            border-radius: 2px;
+            background-color: #333;
+            -webkit-box-shadow: inset 0 0 1px rgba(255, 255, 255, 0.5);
+        }
+        /*# sourceURL=ui/inspectorCommon.css */
+    </style>
+    <style type="text/css">
+        /*
+ * Copyright (C) 2009 Apple Inc.  All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ *
+ * 1.  Redistributions of source code must retain the above copyright
+ *     notice, this list of conditions and the following disclaimer.
+ * 2.  Redistributions in binary form must reproduce the above copyright
+ *     notice, this list of conditions and the following disclaimer in the
+ *     documentation and/or other materials provided with the distribution.
+ * 3.  Neither the name of Apple Computer, Inc. ("Apple") nor the names of
+ *     its contributors may be used to endorse or promote products derived
+ *     from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY APPLE AND ITS CONTRIBUTORS "AS IS" AND ANY
+ * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL APPLE OR ITS CONTRIBUTORS BE LIABLE FOR ANY
+ * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+        
+        .cm-js-keyword {
+            color: rgb(170, 13, 145);
+        }
+        
+        .cm-js-number {
+            color: rgb(28, 0, 207);
+        }
+        
+        .cm-js-comment {
+            color: rgb(0, 116, 0);
+        }
+        
+        .cm-js-string {
+            color: rgb(196, 26, 22);
+        }
+        
+        .cm-js-string-2 {
+            color: rgb(196, 26, 22);
+        }
+        
+        .cm-css-keyword {
+            color: rgb(7, 144, 154);
+        }
+        
+        .cm-css-number {
+            color: rgb(50, 0, 255);
+        }
+        
+        .cm-css-comment {
+            color: rgb(0, 116, 0);
+        }
+        
+        .cm-css-def {
+            color: rgb(200, 0, 0);
+        }
+        
+        .cm-css-meta {
+            color: rgb(200, 0, 0);
+        }
+        
+        .cm-css-atom {
+            color: rgb(7, 144, 154);
+        }
+        
+        .cm-css-string {
+            color: rgb(7, 144, 154);
+        }
+        
+        .cm-css-string-2 {
+            color: rgb(7, 144, 154);
+        }
+        
+        .cm-css-link {
+            color: rgb(7, 144, 154);
+        }
+        
+        .cm-css-variable {
+            color: rgb(200, 0, 0);
+        }
+        
+        .cm-css-variable-2 {
+            color: rgb(0, 0, 128);
+        }
+        
+        .cm-css-property,
+        .webkit-css-property {
+            color: rgb(200, 0, 0);
+        }
+        
+        .cm-xml-meta {
+            color: rgb(192, 192, 192);
+        }
+        
+        .cm-xml-comment {
+            color: rgb(35, 110, 37);
+        }
+        
+        .cm-xml-string {
+            color: rgb(26, 26, 166);
+        }
+        
+        .cm-xml-tag {
+            color: rgb(136, 18, 128);
+        }
+        
+        .cm-xml-attribute {
+            color: rgb(153, 69, 0);
+        }
+        
+        .cm-xml-link {
+            color: #00e;
+        }
+        
+        .webkit-html-comment {
+            /* Keep this in sync with view-source.css (.webkit-html-comment) */
+            color: rgb(35, 110, 37);
+        }
+        
+        .webkit-html-tag {
+            color: rgb(168, 148, 166);
+        }
+        
+        .webkit-html-tag-name,
+        .webkit-html-close-tag-name {
+            /* Keep this in sync with view-source.css (.webkit-html-tag) */
+            color: rgb(136, 18, 128);
+        }
+        
+        .webkit-html-pseudo-element {
+            /* This one is non-standard. */
+            color: brown;
+        }
+        
+        .webkit-html-js-node,
+        .webkit-html-css-node {
+            white-space: pre-wrap;
+        }
+        
+        .webkit-html-text-node {
+            unicode-bidi: -webkit-isolate;
+        }
+        
+        .webkit-html-entity-value {
+            /* This one is non-standard. */
+            background-color: rgba(0, 0, 0, 0.15);
+            unicode-bidi: -webkit-isolate;
+        }
+        
+        .webkit-html-doctype {
+            /* Keep this in sync with view-source.css (.webkit-html-doctype) */
+            color: rgb(192, 192, 192);
+        }
+        
+        .webkit-html-attribute-name {
+            /* Keep this in sync with view-source.css (.webkit-html-attribute-name) */
+            color: rgb(153, 69, 0);
+            unicode-bidi: -webkit-isolate;
+        }
+        
+        .webkit-html-attribute-value {
+            /* Keep this in sync with view-source.css (.webkit-html-attribute-value) */
+            color: rgb(26, 26, 166);
+            unicode-bidi: -webkit-isolate;
+        }
+        
+        .webkit-html-external-link,
+        .webkit-html-resource-link {
+            /* Keep this in sync with view-source.css (.webkit-html-external-link, .webkit-html-resource-link) */
+            color: #00e;
+        }
+        
+        .-theme-with-dark-background .webkit-html-external-link,
+        .-theme-with-dark-background .webkit-html-resource-link,
+        :host-context(.-theme-with-dark-background) .webkit-html-external-link,
+        :host-context(.-theme-with-dark-background) .webkit-html-resource-link {
+            color: hsl(0, 0%, 67%);
+        }
+        
+        .webkit-html-resource-link {
+            /* Required for consistency with view-source.css, since anchors may not have href attributes */
+            text-decoration: underline;
+            cursor: pointer;
+        }
+        
+        .webkit-html-external-link {
+            /* Keep this in sync with view-source.css (.webkit-html-external-link) */
+            text-decoration: none;
+        }
+        
+        .webkit-html-external-link:hover {
+            /* Keep this in sync with view-source.css (.webkit-html-external-link:hover) */
+            text-decoration: underline;
+        }
+        
+        .webkit-html-end-of-file {
+            /* Keep this in sync with view-source.css (.webkit-html-end-of-file) */
+            color: rgb(255, 0, 0);
+            font-weight: bold;
+        }
+        /*# sourceURL=ui/inspectorSyntaxHighlight.css */
+    </style>
+    <div></div>
+    <div class="widget vbox root-view" spellcheck="false" style="margin-right: 0px; margin-bottom: 0px;">
+        <div class="vbox flex-auto split-widget">
+            <div class="widget vbox insertion-point-sidebar">
+                <div class="vbox flex-auto split-widget">
+                    <div class="vbox flex-auto tabbed-pane inspector-view-tabbed-pane insertion-point-main">
+                        <div class="toolbar inspector-view-toolbar inspector-view-toolbar-left tabbed-pane-header-before"></div>
+                        <div class="hbox flex-none flex-centered tabbed-pane-header-after">
+                            <div class="toolbar inspector-view-toolbar flex-none"></div>
+                        </div>
+                        <div class="widget vbox panel elements">
+                            <style type="text/css">
+                                /*
+ * Copyright (C) 2006, 2007, 2008 Apple Inc.  All rights reserved.
+ * Copyright (C) 2009 Anthony Ricaud <rik@webkit.org>
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ *
+ * 1.  Redistributions of source code must retain the above copyright
+ *     notice, this list of conditions and the following disclaimer.
+ * 2.  Redistributions in binary form must reproduce the above copyright
+ *     notice, this list of conditions and the following disclaimer in the
+ *     documentation and/or other materials provided with the distribution.
+ * 3.  Neither the name of Apple Computer, Inc. ("Apple") nor the names of
+ *     its contributors may be used to endorse or promote products derived
+ *     from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY APPLE AND ITS CONTRIBUTORS "AS IS" AND ANY
+ * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL APPLE OR ITS CONTRIBUTORS BE LIABLE FOR ANY
+ * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+                                
+                                #elements-content {
+                                    flex: 1 1;
+                                    overflow: auto;
+                                    padding: 2px 0 0 0;
+                                }
+                                
+                                #elements-content:not(.elements-wrap) > div {
+                                    display: inline-block;
+                                    min-width: 100%;
+                                }
+                                
+                                #elements-content.elements-wrap {
+                                    overflow-x: hidden;
+                                }
+                                
+                                .elements-topbar {
+                                    border-bottom: 1px solid hsla(0, 0%, 0%, 0.1);
+                                    flex-shrink: 0;
+                                }
+                                
+                                #elements-crumbs {
+                                    flex: 0 0 19px;
+                                    background-color: white;
+                                    border-top: 1px solid #ccc;
+                                    overflow: hidden;
+                                    height: 19px;
+                                    width: 100%;
+                                }
+                                
+                                .metrics {
+                                    padding: 8px;
+                                    font-size: 10px;
+                                    text-align: center;
+                                    white-space: nowrap;
+                                }
+                                
+                                .metrics .label {
+                                    position: absolute;
+                                    font-size: 10px;
+                                    margin-left: 3px;
+                                    padding-left: 2px;
+                                    padding-right: 2px;
+                                }
+                                
+                                .metrics .position {
+                                    border: 1px rgb(66%, 66%, 66%) dotted;
+                                    background-color: white;
+                                    display: inline-block;
+                                    text-align: center;
+                                    padding: 3px;
+                                    margin: 3px;
+                                }
+                                
+                                .metrics .margin {
+                                    border: 1px dashed;
+                                    background-color: white;
+                                    display: inline-block;
+                                    text-align: center;
+                                    vertical-align: middle;
+                                    padding: 3px;
+                                    margin: 3px;
+                                }
+                                
+                                .metrics .border {
+                                    border: 1px black solid;
+                                    background-color: white;
+                                    display: inline-block;
+                                    text-align: center;
+                                    vertical-align: middle;
+                                    padding: 3px;
+                                    margin: 3px;
+                                }
+                                
+                                .metrics .padding {
+                                    border: 1px grey dashed;
+                                    background-color: white;
+                                    display: inline-block;
+                                    text-align: center;
+                                    vertical-align: middle;
+                                    padding: 3px;
+                                    margin: 3px;
+                                }
+                                
+                                .metrics .content {
+                                    position: static;
+                                    border: 1px gray solid;
+                                    background-color: white;
+                                    display: inline-block;
+                                    text-align: center;
+                                    vertical-align: middle;
+                                    padding: 3px;
+                                    margin: 3px;
+                                    min-width: 80px;
+                                    overflow: visible;
+                                }
+                                
+                                .metrics .content span {
+                                    display: inline-block;
+                                }
+                                
+                                .metrics .editing {
+                                    position: relative;
+                                    z-index: 100;
+                                    cursor: text;
+                                }
+                                
+                                .metrics .left {
+                                    display: inline-block;
+                                    vertical-align: middle;
+                                }
+                                
+                                .metrics .right {
+                                    display: inline-block;
+                                    vertical-align: middle;
+                                }
+                                
+                                .metrics .top {
+                                    display: inline-block;
+                                }
+                                
+                                .metrics .bottom {
+                                    display: inline-block;
+                                }
+                                
+                                .styles-section {
+                                    padding: 2px 2px 4px 4px;
+                                    min-height: 18px;
+                                    white-space: nowrap;
+                                    background-origin: padding;
+                                    background-clip: padding;
+                                    -webkit-user-select: text;
+                                    border-bottom: 1px solid #eee;
+                                    position: relative;
+                                    overflow: hidden;
+                                }
+                                
+                                .styles-section:last-child {
+                                    border-bottom: none;
+                                }
+                                
+                                .styles-pane .sidebar-separator {
+                                    border-top: 0 none;
+                                }
+                                
+                                .styles-section.read-only {
+                                    background-color: #eee;
+                                }
+                                
+                                .styles-section .style-properties li.not-parsed-ok {
+                                    margin-left: 0;
+                                }
+                                
+                                .styles-filter-engaged,
+                                .styles-section .style-properties li.filter-match,
+                                .styles-section .simple-selector.filter-match {
+                                    background-color: rgba(255, 255, 0, 0.5);
+                                }
+                                
+                                .-theme-with-dark-background .styles-filter-engaged,
+                                .-theme-with-dark-background .styles-section .style-properties li.filter-match,
+                                .-theme-with-dark-background .styles-section .simple-selector.filter-match {
+                                    background-color: hsla(133, 100%, 30%, 0.5);
+                                }
+                                
+                                .styles-section .style-properties li.overloaded.filter-match {
+                                    background-color: rgba(255, 255, 0, 0.25);
+                                }
+                                
+                                .-theme-with-dark-background .styles-section .style-properties li.overloaded.filter-match {
+                                    background-color: hsla(133, 100%, 30%, 0.25);
+                                }
+                                
+                                .styles-section .style-properties li.not-parsed-ok .exclamation-mark {
+                                    display: inline-block;
+                                    position: relative;
+                                    width: 11px;
+                                    height: 10px;
+                                    margin: 0 7px 0 0;
+                                    top: 1px;
+                                    left: -36px;
+                                    /* outdent to compensate for the top-level property indent */
+                                    -webkit-user-select: none;
+                                    cursor: default;
+                                    z-index: 1;
+                                }
+                                
+                                .styles-section .sidebar-pane-closing-brace {
+                                    clear: both;
+                                }
+                                
+                                .styles-section-title {
+                                    background-origin: padding;
+                                    background-clip: padding;
+                                    word-wrap: break-word;
+                                    white-space: normal;
+                                }
+                                
+                                .styles-section-title .media-list {
+                                    color: #888;
+                                }
+                                
+                                .styles-section-title .media-list.media-matches .media.editable-media {
+                                    color: #222;
+                                }
+                                
+                                .styles-section-title .media:not(.editing-media),
+                                .styles-section-title .media:not(.editing-media) .subtitle {
+                                    overflow: hidden;
+                                }
+                                
+                                .styles-section-title .media .subtitle {
+                                    float: right;
+                                    color: rgb(85, 85, 85);
+                                }
+                                
+                                .styles-section-subtitle {
+                                    color: rgb(85, 85, 85);
+                                    float: right;
+                                    margin-left: 5px;
+                                    max-width: 100%;
+                                    text-overflow: ellipsis;
+                                    overflow: hidden;
+                                    white-space: nowrap;
+                                }
+                                
+                                .styles-section .styles-section-subtitle a {
+                                    color: inherit;
+                                }
+                                
+                                .styles-section .selector {
+                                    color: #888;
+                                }
+                                
+                                .styles-section .simple-selector.selector-matches,
+                                .styles-section.keyframe-key {
+                                    color: #222;
+                                }
+                                
+                                .styles-section a[data-uncopyable] {
+                                    display: inline-block;
+                                }
+                                
+                                .styles-section a[data-uncopyable]::before {
+                                    content: attr(data-uncopyable);
+                                    text-decoration: underline;
+                                }
+                                
+                                .styles-section .style-properties {
+                                    margin: 0;
+                                    padding: 2px 4px 0 0;
+                                    list-style: none;
+                                    clear: both;
+                                }
+                                
+                                .styles-section.matched-styles .style-properties {
+                                    padding-left: 0;
+                                }
+                                
+                                .no-affect .style-properties li {
+                                    opacity: 0.5;
+                                }
+                                
+                                .no-affect .style-properties li.editing {
+                                    opacity: 1.0;
+                                }
+                                
+                                .styles-section .style-properties li {
+                                    margin-left: 12px;
+                                    padding-left: 22px;
+                                    white-space: normal;
+                                    text-overflow: ellipsis;
+                                    overflow: hidden;
+                                    cursor: auto;
+                                }
+                                
+                                .styles-section .style-properties li .webkit-css-property {
+                                    margin-left: -22px;
+                                    /* outdent the first line of longhand properties (in an expanded shorthand) to compensate for the "padding-left" shift in .styles-section .style-properties li */
+                                }
+                                
+                                .styles-section .style-properties > li {
+                                    padding-left: 38px;
+                                    clear: both;
+                                    min-height: 14px;
+                                }
+                                
+                                .styles-section .style-properties > li .webkit-css-property {
+                                    margin-left: -38px;
+                                    /* outdent the first line of the top-level properties to compensate for the "padding-left" shift in .styles-section .style-properties > li */
+                                }
+                                
+                                .styles-section .style-properties > li.child-editing {
+                                    padding-left: 8px;
+                                }
+                                
+                                .styles-section .style-properties > li.child-editing .webkit-css-property {
+                                    margin-left: 0;
+                                }
+                                
+                                .styles-section.matched-styles .style-properties li {
+                                    margin-left: 0 !important;
+                                }
+                                
+                                .styles-section .style-properties li.child-editing {
+                                    word-wrap: break-word !important;
+                                    white-space: normal !important;
+                                    padding-left: 0;
+                                }
+                                
+                                .styles-section .style-properties ol {
+                                    display: none;
+                                    margin: 0;
+                                    -webkit-padding-start: 12px;
+                                    list-style: none;
+                                }
+                                
+                                .styles-section .style-properties ol.expanded {
+                                    display: block;
+                                }
+                                
+                                .styles-section.matched-styles .style-properties li.parent .expand-element {
+                                    -webkit-user-select: none;
+                                    -webkit-mask-image: url(Images/toolbarButtonGlyphs.png);
+                                    -webkit-mask-size: 352px 168px;
+                                    margin-right: 2px;
+                                    margin-left: -6px;
+                                    background-color: #777;
+                                    width: 8px;
+                                    height: 10px;
+                                    display: inline-block;
+                                }
+                                
+                                @media (-webkit-min-device-pixel-ratio: 1.5) {
+                                    .styles-section.matched-styles .style-properties li.parent .expand-element {
+                                        -webkit-mask-image: url(Images/toolbarButtonGlyphs_2x.png);
+                                    }
+                                }
+                                /* media */
+                                
+                                .styles-section.matched-styles .style-properties li.parent .expand-element {
+                                    -webkit-mask-position: -4px -96px;
+                                }
+                                
+                                .styles-section.matched-styles .style-properties li.parent.expanded .expand-element {
+                                    -webkit-mask-position: -20px -96px;
+                                }
+                                
+                                .styles-section .style-properties li .info {
+                                    padding-top: 4px;
+                                    padding-bottom: 3px;
+                                }
+                                
+                                .styles-section.matched-styles:not(.read-only):hover .style-properties .enabled-button {
+                                    visibility: visible;
+                                }
+                                
+                                .styles-section.matched-styles:not(.read-only) .style-properties li.disabled .enabled-button {
+                                    visibility: visible;
+                                }
+                                
+                                .styles-section .style-properties .enabled-button {
+                                    visibility: hidden;
+                                    float: left;
+                                    font-size: 10px;
+                                    margin: 0;
+                                    vertical-align: top;
+                                    position: relative;
+                                    z-index: 1;
+                                    width: 18px;
+                                    left: -40px;
+                                    /* original -2px + (-38px) to compensate for the first line outdent */
+                                    top: 1px;
+                                    height: 13px;
+                                }
+                                
+                                .styles-section.matched-styles .style-properties ol.expanded {
+                                    margin-left: 16px;
+                                }
+                                
+                                .styles-section .style-properties .overloaded:not(.has-ignorable-error),
+                                .styles-section .style-properties .inactive,
+                                .styles-section .style-properties .disabled,
+                                .styles-section .style-properties .not-parsed-ok:not(.has-ignorable-error) {
+                                    text-decoration: line-through;
+                                }
+                                
+                                .styles-section .style-properties .has-ignorable-error .webkit-css-property {
+                                    color: inherit;
+                                }
+                                
+                                .styles-section .style-properties .implicit,
+                                .styles-section .style-properties .inherited {
+                                    opacity: 0.5;
+                                }
+                                
+                                .styles-section .style-properties .has-ignorable-error {
+                                    color: gray;
+                                }
+                                
+                                .styles-element-state-pane {
+                                    overflow: hidden;
+                                    height: 66px;
+                                    padding-left: 2px;
+                                    border-bottom: 1px solid rgb(189, 189, 189);
+                                }
+                                
+                                @keyframes styles-element-state-pane-slidein {
+                                    from {
+                                        margin-top: -60px;
+                                    }
+                                    to {
+                                        margin-top: 0px;
+                                    }
+                                }
+                                
+                                @keyframes styles-element-state-pane-slideout {
+                                    from {
+                                        margin-top: 0px;
+                                    }
+                                    to {
+                                        margin-top: -60px;
+                                    }
+                                }
+                                
+                                .styles-sidebar-toolbar-pane {
+                                    position: relative;
+                                    animation-duration: 0.1s;
+                                    animation-direction: normal;
+                                }
+                                
+                                .styles-sidebar-toolbar-pane-container {
+                                    position: relative;
+                                    overflow: hidden;
+                                    flex-shrink: 0;
+                                }
+                                
+                                .styles-element-state-pane {
+                                    background-color: #f3f3f3;
+                                    border-bottom: 1px solid rgb(189, 189, 189);
+                                    margin-top: 0;
+                                }
+                                
+                                .styles-element-classes-pane {
+                                    background-color: #f3f3f3;
+                                    border-bottom: 1px solid rgb(189, 189, 189);
+                                    padding: 6px 2px 2px;
+                                }
+                                
+                                .styles-element-classes-container {
+                                    display: flex;
+                                    flex-wrap: wrap;
+                                    justify-content: flex-start;
+                                }
+                                
+                                .styles-element-classes-pane label {
+                                    margin-right: 15px;
+                                }
+                                
+                                .styles-element-classes-pane .title-container {
+                                    padding-bottom: 2px;
+                                }
+                                
+                                .styles-element-classes-pane .new-class-input {
+                                    padding-left: 3px;
+                                    border: 1px solid #ddd;
+                                    line-height: 15px;
+                                    margin-left: 3px;
+                                    width: calc(100% - 7px);
+                                }
+                                
+                                .styles-element-state-pane > div {
+                                    margin: 8px 4px 6px;
+                                }
+                                
+                                .styles-element-state-pane > table {
+                                    width: 100%;
+                                    border-spacing: 0;
+                                }
+                                
+                                .styles-element-state-pane td {
+                                    padding: 0;
+                                }
+                                
+                                .styles-animations-controls-pane > * {
+                                    margin: 6px 4px;
+                                }
+                                
+                                .styles-animations-controls-pane {
+                                    border-bottom: 1px solid rgb(189, 189, 189);
+                                    height: 60px;
+                                    overflow: hidden;
+                                    background-color: #eee;
+                                }
+                                
+                                .animations-controls {
+                                    width: 100%;
+                                    max-width: 200px;
+                                    display: flex;
+                                    align-items: center;
+                                }
+                                
+                                .animations-controls > .toolbar {
+                                    display: inline-block;
+                                }
+                                
+                                .animations-controls > input {
+                                    flex-grow: 1;
+                                    margin-right: 10px;
+                                }
+                                
+                                .animations-controls > .playback-label {
+                                    width: 35px;
+                                }
+                                
+                                .styles-selector {
+                                    cursor: text;
+                                }
+                                
+                                .image-preview-container {
+                                    background: transparent;
+                                    text-align: center;
+                                }
+                                
+                                .image-preview-container img {
+                                    margin: 2px auto;
+                                    max-width: 100px;
+                                    max-height: 100px;
+                                    background-image: url(Images/checker.png);
+                                    -webkit-user-select: text;
+                                    -webkit-user-drag: auto;
+                                }
+                                
+                                .sidebar-pane.composite {
+                                    position: absolute;
+                                }
+                                
+                                .metrics {
+                                    border-bottom: 1px solid #ccc;
+                                }
+                                
+                                .-theme-with-dark-background .metrics {
+                                    color: #222;
+                                }
+                                
+                                .-theme-with-dark-background .metrics > div:hover {
+                                    color: #ccc;
+                                }
+                                
+                                .metrics-and-styles .metrics {
+                                    border-top: 1px solid #ccc;
+                                    border-bottom: none;
+                                }
+                                
+                                .sidebar-pane.composite .metrics {
+                                    min-height: 190px;
+                                    display: flex;
+                                    flex-direction: column;
+                                    -webkit-align-items: center;
+                                    -webkit-justify-content: center;
+                                }
+                                
+                                .sidebar-pane .metrics-and-styles,
+                                .sidebar-pane .metrics-and-computed {
+                                    display: flex !important;
+                                    flex-direction: column !important;
+                                    position: relative;
+                                }
+                                
+                                .sidebar-pane .style-panes-wrapper {
+                                    transform: translateZ(0);
+                                    flex: 1;
+                                    overflow-y: auto;
+                                    position: relative;
+                                }
+                                
+                                .styles-sidebar-pane-toolbar-container {
+                                    flex-shrink: 0;
+                                    overflow: hidden;
+                                }
+                                
+                                .styles-sidebar-pane-toolbar {
+                                    border-bottom: 1px solid #eee;
+                                    flex-shrink: 0;
+                                }
+                                
+                                .styles-sidebar-pane-filter-box {
+                                    flex: auto;
+                                    display: flex;
+                                }
+                                
+                                .styles-sidebar-pane-filter-box > input {
+                                    outline: none !important;
+                                    border: none;
+                                    width: 100%;
+                                    background: transparent;
+                                    margin-left: 4px;
+                                }
+                                
+                                .sidebar-pane.composite .platform-fonts {
+                                    -webkit-user-select: text;
+                                }
+                                
+                                .sidebar-pane.composite .platform-fonts .sidebar-separator {
+                                    height: 24px;
+                                    background-color: #f1f1f1;
+                                    border-color: #ddd;
+                                    display: flex;
+                                    align-items: center;
+                                }
+                                
+                                .sidebar-pane.composite .platform-fonts .stats-section {
+                                    margin: 5px 0;
+                                }
+                                
+                                .sidebar-pane.composite .platform-fonts .font-stats-item {
+                                    padding-left: 1em;
+                                }
+                                
+                                .sidebar-pane.composite .platform-fonts .font-stats-item .delimeter {
+                                    margin: 0 1ex 0 1ex;
+                                }
+                                
+                                .sidebar-pane.composite .metrics-and-styles .metrics {
+                                    border-bottom: none;
+                                }
+                                
+                                .sidebar-pane > .split-widget {
+                                    position: absolute;
+                                    top: 0;
+                                    bottom: 0;
+                                    left: 0;
+                                    right: 0;
+                                }
+                                
+                                .styles-section:not(.read-only) .style-properties .webkit-css-property.styles-panel-hovered,
+                                .styles-section:not(.read-only) .style-properties .value .styles-panel-hovered,
+                                .styles-section:not(.read-only) .style-properties .value.styles-panel-hovered,
+                                .styles-section:not(.read-only) span.simple-selector.styles-panel-hovered,
+                                .styles-section:not(.read-only) .media-text.styles-panel-hovered {
+                                    text-decoration: underline;
+                                    cursor: default;
+                                }
+                                
+                                .styles-clipboard-only {
+                                    display: inline-block;
+                                    width: 0;
+                                    opacity: 0;
+                                    pointer-events: none;
+                                    white-space: pre;
+                                }
+                                
+                                .popover-icon {
+                                    margin-left: 1px;
+                                    margin-right: 2px;
+                                    width: 10px;
+                                    height: 10px;
+                                    position: relative;
+                                    top: 1px;
+                                    display: inline-block;
+                                    line-height: 1px;
+                                    -webkit-user-select: none;
+                                }
+                                
+                                .bezier-icon {
+                                    background-color: #9C27B0;
+                                    border-radius: 2px;
+                                }
+                                
+                                .bezier-icon path {
+                                    stroke: white;
+                                    stroke-width: 1.5;
+                                    stroke-linecap: square;
+                                    fill: none;
+                                }
+                                
+                                .swatch {
+                                    background-image: url(Images/checker.png);
+                                }
+                                
+                                li.child-editing .styles-clipboard-only {
+                                    display: none;
+                                }
+                                
+                                li.editing .swatch,
+                                li.editing .enabled-button {
+                                    display: none !important;
+                                }
+                                
+                                .sidebar-separator {
+                                    background-color: #ddd;
+                                    padding: 0 5px;
+                                    border-top: 1px solid #ccc;
+                                    border-bottom: 1px solid #ccc;
+                                    color: rgb(50, 50, 50);
+                                    white-space: nowrap;
+                                    text-overflow: ellipsis;
+                                    overflow: hidden;
+                                    line-height: 16px;
+                                }
+                                
+                                .sidebar-separator > span.monospace {
+                                    background: rgb(255, 255, 255);
+                                    padding: 0px 3px;
+                                    border-radius: 2px;
+                                    border: 1px solid #C1C1C1;
+                                }
+                                
+                                .swatch-inner {
+                                    width: 100%;
+                                    height: 100%;
+                                    display: inline-block;
+                                    border: 1px solid rgba(128, 128, 128, 0.6);
+                                }
+                                
+                                .swatch-inner:hover {
+                                    border: 1px solid rgba(64, 64, 64, 0.8);
+                                }
+                                
+                                .animation-section-body {
+                                    display: none;
+                                }
+                                
+                                .animation-section-body.expanded {
+                                    display: block;
+                                }
+                                
+                                .animation-section-body .section {
+                                    border-bottom: 1px solid rgb(191, 191, 191);
+                                }
+                                
+                                .animationsHeader {
+                                    padding-top: 23px;
+                                }
+                                
+                                .global-animations-toolbar {
+                                    position: absolute;
+                                    top: 0;
+                                    width: 100%;
+                                    background-color: #eee;
+                                    border-bottom: 1px solid rgb(163, 163, 163);
+                                    padding-left: 10px;
+                                }
+                                
+                                .events-pane .section:not(:first-of-type) {
+                                    border-top: 1px solid rgb(231, 231, 231);
+                                }
+                                
+                                .events-pane .section {
+                                    margin: 0;
+                                }
+                                
+                                .style-properties li.editing {
+                                    margin-left: 10px;
+                                    text-overflow: clip;
+                                }
+                                
+                                .style-properties li.editing-sub-part {
+                                    padding: 3px 6px 8px 18px;
+                                    margin: -1px -6px -8px -6px;
+                                    text-overflow: clip;
+                                }
+                                
+                                .properties-widget-section {
+                                    padding: 2px 0px 2px 5px;
+                                }
+                                
+                                .sidebar-pane-section-toolbar {
+                                    position: absolute;
+                                    right: 0;
+                                    bottom: 0;
+                                    visibility: hidden;
+                                    background-color: rgba(255, 255, 255, 0.9);
+                                }
+                                
+                                .styles-pane:not(.is-editing-style) .styles-section.matched-styles:not(.read-only):hover .sidebar-pane-section-toolbar {
+                                    visibility: visible;
+                                }
+                                /*# sourceURL=elements/elementsPanel.css */
+                            </style>
+                            <div class="vbox flex-auto split-widget">
+                                <div class="vbox flex-auto insertion-point-main">
+                                    <div id="elements-content" class="elements-wrap">
+                                        <div></div>
+                                    </div>
+                                    <div id="elements-crumbs">
+                                        <div class="vbox flex-auto"></div>
+                                    </div>
+                                </div>
+                                <div class="vbox flex-auto tabbed-pane sidebar-tabbed-pane insertion-point-sidebar">
+                                    <div class="sidebar-pane composite fill metrics-and-styles">
+                                        <div class="widget vbox">
+                                            <div class="styles-sidebar-pane-toolbar-container">
+                                                <div class="hbox styles-sidebar-pane-toolbar">
+                                                    <div class="styles-sidebar-pane-filter-box"><input placeholder="Filter"></div>
+                                                    <div class="toolbar styles-pane-toolbar"></div>
+                                                </div>
+                                                <div class="styles-sidebar-toolbar-pane-container">
+                                                    <div class="styles-sidebar-toolbar-pane"></div>
+                                                </div>
+                                            </div>
+                                            <div class="widget vbox style-panes-wrapper">
+                                                <div class="sidebar-pane styles-pane">
+                                                    <div>
+                                                        <div class="styles-section matched-styles monospace">
+                                                            <div class="styles-section-title ">
+                                                                <div class="media-list media-matches"></div>
+                                                                <div class="styles-section-subtitle"></div>
+                                                                <div><span class="selector">element.style</span><span> {</span></div>
+                                                            </div>
+                                                            <ol class="style-properties monospace" tabindex="0"></ol>
+                                                            <div class="sidebar-pane-closing-brace">}
+                                                                <div class="sidebar-pane-section-toolbar toolbar"></div>
+                                                            </div>
+                                                        </div>
+                                                        <div class="styles-section matched-styles monospace navigable">
+                                                            <div class="styles-section-title styles-selector">
+                                                                <div class="media-list media-matches"></div>
+                                                                <div class="styles-section-subtitle">
+                                                                    <a class=" webkit-html-resource-link" data-uncopyable="(index):14"></a>
+                                                                </div>
+                                                                <div><span class="selector"><span class="simple-selector selector-matches">body</span></span><span> {</span></div>
+                                                            </div>
+                                                            <ol class="style-properties monospace" tabindex="0">
+                                                                <li><input class="enabled-button" type="checkbox"><span class="styles-clipboard-only">    </span><span class="webkit-css-property">overflow-x</span>: <span class="expand-element"></span><span class="value">hidden</span>;</li>
+                                                                <ol class="children"></ol>
+                                                            </ol>
+                                                            <div class="sidebar-pane-closing-brace">}
+                                                                <div class="sidebar-pane-section-toolbar toolbar"></div>
+                                                            </div>
+                                                        </div>
+                                                        <div class="styles-section matched-styles monospace navigable">
+                                                            <div class="styles-section-title styles-selector">
+                                                                <div class="media-list media-matches"></div>
+                                                                <div class="styles-section-subtitle">
+                                                                    <a class=" webkit-html-resource-link" data-uncopyable="chrome_shared.css:27"></a>
+                                                                </div>
+                                                                <div><span class="selector"><span class="simple-selector selector-matches">body</span></span><span> {</span></div>
+                                                            </div>
+                                                            <ol class="style-properties monospace" tabindex="0">
+                                                                <li><input class="enabled-button" type="checkbox"><span class="styles-clipboard-only">    </span><span class="webkit-css-property">cursor</span>: <span class="expand-element"></span><span class="value">default</span>;</li>
+                                                                <ol class="children"></ol>
+                                                                <li class="parent"><input class="enabled-button" type="checkbox"><span class="styles-clipboard-only">    </span><span class="webkit-css-property">margin</span>: <span class="expand-element"></span><span class="value">0</span>;</li>
+                                                                <ol class="children">
+                                                                    <li><span class="styles-clipboard-only">    </span><span class="webkit-css-property">margin-top</span>: <span class="expand-element"></span><span class="value">0px</span>;</li>
+                                                                    <ol class="children"></ol>
+                                                                    <li><span class="styles-clipboard-only">    </span><span class="webkit-css-property">margin-right</span>: <span class="expand-element"></span><span class="value">0px</span>;</li>
+                                                                    <ol class="children"></ol>
+                                                                    <li><span class="styles-clipboard-only">    </span><span class="webkit-css-property">margin-bottom</span>: <span class="expand-element"></span><span class="value">0px</span>;</li>
+                                                                    <ol class="children"></ol>
+                                                                    <li><span class="styles-clipboard-only">    </span><span class="webkit-css-property">margin-left</span>: <span class="expand-element"></span><span class="value">0px</span>;</li>
+                                                                    <ol class="children"></ol>
+                                                                </ol>
+                                                            </ol>
+                                                            <div class="sidebar-pane-closing-brace">}
+                                                                <div class="sidebar-pane-section-toolbar toolbar"></div>
+                                                            </div>
+                                                        </div>
+                                                        <div class="styles-section matched-styles monospace navigable">
+                                                            <div class="styles-section-title styles-selector">
+                                                                <div class="media-list media-matches"></div>
+                                                                <div class="styles-section-subtitle">
+                                                                    <a class=" webkit-html-resource-link" data-uncopyable="text_defaults.css:22"></a>
+                                                                </div>
+                                                                <div><span class="selector"><span class="simple-selector selector-matches">body</span></span><span> {</span></div>
+                                                            </div>
+                                                            <ol class="style-properties monospace" tabindex="0">
+                                                                <li><input class="enabled-button" type="checkbox"><span class="styles-clipboard-only">    </span><span class="webkit-css-property">font-family</span>: <span class="expand-element"></span><span class="value">'Segoe UI', Tahoma, sans-serif</span>;</li>
+                                                                <ol class="children"></ol>
+                                                                <li><input class="enabled-button" type="checkbox"><span class="styles-clipboard-only">    </span><span class="webkit-css-property">font-size</span>: <span class="expand-element"></span><span class="value">75%</span>;</li>
+                                                                <ol class="children"></ol>
+                                                            </ol>
+                                                            <div class="sidebar-pane-closing-brace">}
+                                                                <div class="sidebar-pane-section-toolbar toolbar"></div>
+                                                            </div>
+                                                        </div>
+                                                        <div class="styles-section matched-styles monospace read-only">
+                                                            <div class="styles-section-title styles-selector">
+                                                                <div class="media-list media-matches"></div>
+                                                                <div class="styles-section-subtitle">user agent stylesheet</div>
+                                                                <div><span class="selector"><span class="simple-selector selector-matches">body</span></span><span> {</span></div>
+                                                            </div>
+                                                            <ol class="style-properties monospace" tabindex="0">
+                                                                <li><input class="enabled-button" type="checkbox"><span class="styles-clipboard-only">    </span><span class="webkit-css-property">display</span>: <span class="expand-element"></span><span class="value">block</span>;</li>
+                                                                <ol class="children"></ol>
+                                                                <li class="parent overloaded"><input class="enabled-button" type="checkbox"><span class="styles-clipboard-only">    </span><span class="webkit-css-property">margin</span>: <span class="expand-element"></span><span class="value">8px</span>;</li>
+                                                                <ol class="children">
+                                                                    <li class="overloaded"><span class="styles-clipboard-only">    </span><span class="webkit-css-property">margin-top</span>: <span class="expand-element"></span><span class="value">8px</span>;</li>
+                                                                    <ol class="children"></ol>
+                                                                    <li class="overloaded"><span class="styles-clipboard-only">    </span><span class="webkit-css-property">margin-right</span>: <span class="expand-element"></span><span class="value">8px</span>;</li>
+                                                                    <ol class="children"></ol>
+                                                                    <li class="overloaded"><span class="styles-clipboard-only">    </span><span class="webkit-css-property">margin-bottom</span>: <span class="expand-element"></span><span class="value">8px</span>;</li>
+                                                                    <ol class="children"></ol>
+                                                                    <li class="overloaded"><span class="styles-clipboard-only">    </span><span class="webkit-css-property">margin-left</span>: <span class="expand-element"></span><span class="value">8px</span>;</li>
+                                                                    <ol class="children"></ol>
+                                                                </ol>
+                                                            </ol>
+                                                            <div class="sidebar-pane-closing-brace">}</div>
+                                                        </div>
+                                                        <div class="sidebar-separator">Inherited from <span class="monospace"></span></div>
+                                                        <div class="styles-section matched-styles monospace navigable">
+                                                            <div class="styles-section-title styles-selector">
+                                                                <div class="media-list media-matches"></div>
+                                                                <div class="styles-section-subtitle">
+                                                                    <a class=" webkit-html-resource-link" data-uncopyable="text_defaults.css:18"></a>
+                                                                </div>
+                                                                <div><span class="selector"><span class="simple-selector selector-matches">html</span></span><span> {</span></div>
+                                                            </div>
+                                                            <ol class="style-properties monospace" tabindex="0">
+                                                                <li><input class="enabled-button" type="checkbox"><span class="styles-clipboard-only">    </span><span class="webkit-css-property">direction</span>: <span class="expand-element"></span><span class="value">ltr</span>;</li>
+                                                                <ol class="children"></ol>
+                                                            </ol>
+                                                            <div class="sidebar-pane-closing-brace">}
+                                                                <div class="sidebar-pane-section-toolbar toolbar"></div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="sidebar-pane">
+                                                    <div class="metrics">
+                                                        <div class="margin" style="background-color: rgba(246, 178, 107, 0.658824);">
+                                                            <div class="label">margin</div>
+                                                            <div class="top">‒</div><br>
+                                                            <div class="left">‒</div>
+                                                            <div class="border" style="background-color: rgba(255, 229, 153, 0.658824);">
+                                                                <div class="label">border</div>
+                                                                <div class="top">‒</div><br>
+                                                                <div class="left">‒</div>
+                                                                <div class="padding" style="background-color: rgba(147, 196, 125, 0.54902);">
+                                                                    <div class="label">padding</div>
+                                                                    <div class="top">‒</div><br>
+                                                                    <div class="left">‒</div>
+                                                                    <div class="content" style="background-color: rgba(111, 168, 220, 0.658824);"><span>1920</span> × <span>0</span></div>
+                                                                    <div class="right">‒</div><br>
+                                                                    <div class="bottom">‒</div>
+                                                                </div>
+                                                                <div class="right">‒</div><br>
+                                                                <div class="bottom">‒</div>
+                                                            </div>
+                                                            <div class="right">‒</div><br>
+                                                            <div class="bottom">‒</div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div><iframe src="chrome-extension://fngmhnnpilhplaeedifhccceomclgfbg/devtools/devtools-page.html" style="display: none;"></iframe></body>
+
+</html>

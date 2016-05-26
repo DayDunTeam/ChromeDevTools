@@ -1,0 +1,8 @@
+{
+    "app_name": {
+        "message": "Dev Tools+"
+    },
+    "app_description": {
+        "message": "An alternative to the default chrome dev tools."
+    }
+}

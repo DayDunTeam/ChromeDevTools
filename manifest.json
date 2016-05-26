@@ -1,0 +1,22 @@
+{
+    "name": "__MSG_app_name__",
+    "short_name": "__MSG_app_name__",
+    "description": "__MSG_app_description__",
+    "version": "0.0.1",
+    "manifest_version": 2,
+    "minimum_chrome_version": "38",
+    "default_locale": "en",
+    "offline_enabled": true,
+    "permissions": [
+        "contextMenus",
+        "tabs"
+    ],
+    "icons": {
+        "16": "images/icon_16.png",
+        "32": "images/icon_32.png",
+        "128": "images/icon_128.png"
+    },
+    "background": {
+        "scripts": [ "background.js" ]
+    }
+}
