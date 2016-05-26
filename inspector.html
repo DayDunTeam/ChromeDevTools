@@ -9,7 +9,7 @@
     <body>
         <div id="inspector">
             <div id="header">
-                <button onclick="">Update</button>
+                <button id="requestDocument">Request document</button>
             </div>
             <div id="content">
                 <div id="elements">
@@ -17,20 +17,19 @@
                         <ol id="elements-list">
                             <li>
                                 <span class="html-doctype">&lt;!DOCTYPE html&gt;</span>
+                                <ol class="content"></ol>
                             </li>
-                            <ol class="children"></ol>
                             <li class="parent expanded">
                                 <span class="html-tag">&lt;<span class="html-tag-name">html</span>&gt;</span>
+                                <ol class="content expanded">
+                                    <li class="parent expanded">
+                                        <span class="html-tag">&lt;<span class="html-tag-name">head</span> <span class="html-attribute"><span class="html-attribute-name">id</span>="<span class="html-attribute-value">test-id</span>"</span>&gt;</span>
+                                        <ol class="content"></ol>
+                                        <span class="html-tag html-close">&lt;<span class="html-close-tag-name">/head</span>&gt;</span>
+                                    </li>
+                                </ol>
+                                <span class="html-tag html-close">&lt;<span class="html-close-tag-name">/html</span>&gt;</span>
                             </li>
-                            <ol class="children expanded">
-                                <li class="parent expanded">
-                                    <span class="html-tag">&lt;<span class="html-tag-name">head</span> <span class="html-attribute"><span class="html-attribute-name">id</span>="<span class="html-attribute-value">test-id</span>"</span>&gt;</span>
-                                </li>
-                                <ol class="children"></ol>
-                                <li>
-                                    <span class="html-tag html-close">&lt;<span class="html-close-tag-name">/html</span>&gt;</span>
-                                </li>
-                            </ol>
                         </ol>
                     </div>
                     <div id="style-view">

@@ -10,7 +10,7 @@
     "permissions": [
         "contextMenus",
         "tabs",
-        "*://*/"
+        "<all_urls>"
     ],
     "icons": {
         "16": "images/icon_16.png",
