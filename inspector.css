@@ -12,8 +12,13 @@ html, body, #inspector {
 }
 
 ol.content {
+    display: none;
     list-style-type: none;
     padding: 0 0 0 12px;
+}
+
+ol.content.expanded {
+    display: block;
 }
 
 ol.content.one-line {

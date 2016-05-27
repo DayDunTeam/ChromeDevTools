@@ -19,12 +19,12 @@ chrome.runtime.onMessage.addListener(function(request, sender) {
     }
 });
 
-function printElement(element, inElement, newDocument) {
-    var elementElement = document.createElement("li");
-    var elementTag = document.createElement("span");
+function printElement(element, inElement) {
+    elementElement = document.createElement("li");
+    elementTag = document.createElement("span");
     elementTag.className = "html-tag";
     elementTag.innerHTML = "<";
-    var elementName = document.createElement("span");
+    elementName = document.createElement("span");
     elementName.className = "html-tag-name";
     elementName.innerHTML = element.nodeName.toLowerCase();
     elementTag.appendChild(elementName);
@@ -47,10 +47,28 @@ function printElement(element, inElement, newDocument) {
     elementTag.innerHTML += ">";
     elementElement.appendChild(elementTag);
     var elementContent = document.createElement("ol");
+    elementElement.onclick = function() {
+        if (elementContent.className == "content one-line") {
+            elementContent.className = "content one-line expanded";
+        } else {
+            elementContent.className = "content expanded";
+        }
+    };
+    elementElement.appendChild(elementContent);
+    var closingTag = document.createElement("span");
+    closingTag.className = "html-tag html-close";
+    closingTag.innerHTML = "<";
+    var closingName = document.createElement("span");
+    closingName.className = "html-close-tag-name";
+    closingName.innerHTML = "/" + element.nodeName.toLowerCase();
+    closingTag.appendChild(closingName);
+    closingTag.innerHTML += ">";
+    elementElement.appendChild(closingTag);
+    inElement.appendChild(elementElement);
     if (element.children.length) {
         elementContent.className = "content";
         for (var i=0, count=element.children.length; i<count; i++) {
-            printElement(element.children[i], elementContent, false);
+            printElement(element.children[i], elementContent);
         }
     } else {
         if (element.innerText) {
@@ -63,17 +81,6 @@ function printElement(element, inElement, newDocument) {
             }
         }
     }
-    elementElement.appendChild(elementContent);
-    var closingTag = document.createElement("span");
-    closingTag.className = "html-tag html-close";
-    closingTag.innerHTML = "<";
-    var closingName = document.createElement("span");
-    closingName.className = "html-close-tag-name";
-    closingName.innerHTML = "/" + element.nodeName.toLowerCase();
-    closingTag.appendChild(closingName);
-    closingTag.innerHTML += ">";
-    elementElement.appendChild(closingTag);
-    inElement.appendChild(elementElement);
 }
 
 function printPageElements() {
@@ -89,7 +96,7 @@ function printPageElements() {
     + "&gt;";
     doctype.appendChild(doctypeSpan);
     document.getElementById("elements-list").appendChild(doctype);
-    printElement(source.documentElement, document.getElementById("elements-list"), true);
+    printElement(source.documentElement, document.getElementById("elements-list"));
 }
 
 function requestDocument() {

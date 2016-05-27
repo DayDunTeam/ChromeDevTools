@@ -10,6 +10,7 @@
     "permissions": [
         "contextMenus",
         "tabs",
+        "webNavigation",
         "<all_urls>"
     ],
     "icons": {
