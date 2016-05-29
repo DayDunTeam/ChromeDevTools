@@ -3,15 +3,28 @@ var DOMParse = new DOMParser();
 
 var printElementIndex = [];
 
-var tab;
+var tabId;
 var source;
 
 window.onerror = function(message, source, line) {
     alert("Error: " + message + "\nLine: " + line + "\nSource: " + source);
 };
 
-chrome.runtime.onMessage.addListener(function(request, sender) {
-    if (request.action == "documentSource") {
+chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
+    
+    if (request.type == "tabId") {
+        tabId = request.tabId;
+        chrome.debugger.attach({tabId:tabId}, "1.1", function() {
+            if (chrome.runtime.lastError) {
+                alert(chrome.runtime.lastError.message);
+            } else {
+                alert("wew");
+                chrome.debugger.sendCommand({tabId:tabId}, "getDocument", {}, function(result) {
+                    alert(result.root);
+                });
+            }
+        });
+    } else if (request.type == "document") {
         console.log(sender);
         tab = sender.tab.id;
         source = DOMParse.parseFromString(request.html, "text/html");
@@ -106,7 +119,5 @@ function requestDocument() {
 }
 
 window.onload = function() {
-    document.getElementById("requestDocument").onclick = function() {
-        printPageElements();
-    };
+    
 };
