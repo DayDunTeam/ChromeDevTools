@@ -10,25 +10,23 @@ function sendCommand(debuggee, command, params) {
     });
 }
 
-chrome.webNavigation.onCommitted.addListener(function(details) {
+chrome.tabs.onCreated.addListener(function(tab) {
     if (!details.frameId) {
         //alert("Url: " + details.url + "\nTabId: " + details.tabId + "\nTransitionType: " + details.transitionType);
         //chrome.tabs.executeScript(details.tabId, {file: "contentScript.js", run_at: "document_start"});
-        chrome.debugger.attach({tabId: details.tabId}, "1.1", function() {
+        chrome.debugger.attach({tabId: tab.id}, "1.1", function() {
             if (chrome.runtime.lastError) {
                 alert(chrome.runtime.lastError.message);
             } else {
                 alert("Attached");
-                tabs[details.tabId] = {
+                tabs[tab.id] = {
                     document: null,
                     console: [],
                     getDocInterval: setInterval(chrome)
                 };
-                chrome.debugger.sendCommand({tabId: details.tabId}, "DOM.getDocument", {}, function(result) {
-                    tabs[details.tabId].document = result.root;
-                });
-                chrome.debugger.sendCommand({tabId: details.tabId}, "Console.enable");
-                chrome.debugger.sendCommand({tabId: details.tabId}, "DOM.setInspectModeEnabled", {});
+                sendCommand({tabid: tab.id}, "Console.enable");
+                sendCommand({tabid: tab.id}, "DOM.setInspectModeEnabled");
+                tabs[tab.id].document = sendCommand({tabId: tab.id}, "DOM.getDocument").root;
             }
         });
     }
